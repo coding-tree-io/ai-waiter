@@ -1,7 +1,7 @@
 'use client';
 
-import { useMemo } from 'react';
-import { SendHorizontal, Sparkles } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Mic, MicOff, SendHorizontal, Sparkles } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { useChatContext } from '@/context/chat-context';
 import { MENU_ITEMS } from '@/lib/data/menu';
@@ -58,9 +58,85 @@ function scrollToMenuAnchor(href: string | undefined, onDone?: () => void) {
   });
 }
 
+type SpeechRecognitionConstructor = new () => {
+  lang: string;
+  interimResults: boolean;
+  continuous: boolean;
+  start: () => void;
+  stop: () => void;
+  onresult: ((event: { results: ArrayLike<{ 0: { transcript: string } }> }) => void) | null;
+  onend: (() => void) | null;
+  onerror: (() => void) | null;
+};
+
 export function ChatPanel({ onMenuLinkClick }: { onMenuLinkClick?: () => void }) {
-  const { messages, input, handleInputChange, handleSubmit, isLoading, append } =
+  const {
+    messages,
+    input,
+    handleInputChange,
+    handleSubmit,
+    isLoading,
+    append,
+    setInput
+  } =
     useChatContext();
+  const [isListening, setIsListening] = useState(false);
+  const recognitionRef = useRef<InstanceType<SpeechRecognitionConstructor> | null>(null);
+  const speechSupported =
+    typeof window !== 'undefined' &&
+    ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window);
+
+  useEffect(() => {
+    const SpeechRecognition =
+      ((window as unknown as { SpeechRecognition?: SpeechRecognitionConstructor })
+        .SpeechRecognition ||
+        (window as unknown as { webkitSpeechRecognition?: SpeechRecognitionConstructor })
+          .webkitSpeechRecognition) ?? null;
+
+    if (!SpeechRecognition) {
+      return;
+    }
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'en-US';
+    recognition.interimResults = true;
+    recognition.continuous = false;
+
+    recognition.onresult = (event) => {
+      const transcript = Array.from(event.results)
+        .map((result) => result[0]?.transcript ?? '')
+        .join('')
+        .trim();
+      if (transcript) {
+        setInput(transcript);
+      }
+    };
+
+    recognition.onend = () => {
+      setIsListening(false);
+    };
+
+    recognition.onerror = () => {
+      setIsListening(false);
+    };
+
+    recognitionRef.current = recognition;
+
+    return () => {
+      recognitionRef.current?.stop();
+      recognitionRef.current = null;
+    };
+  }, [setInput]);
+
+  const toggleListening = () => {
+    if (!speechSupported || !recognitionRef.current) return;
+    if (isListening) {
+      recognitionRef.current.stop();
+      setIsListening(false);
+      return;
+    }
+    recognitionRef.current.start();
+    setIsListening(true);
+  };
 
   const orderedMessages = useMemo(
     () => messages.filter((message) => message.role !== 'system'),
@@ -178,6 +254,17 @@ export function ChatPanel({ onMenuLinkClick }: { onMenuLinkClick?: () => void })
             placeholder="Ask for recommendations, edits, or full orders..."
             className="flex-1 rounded-full border border-white/10 bg-surfaceElevated px-4 py-3 text-sm text-ink shadow-sm focus:border-white/40 focus:outline-none"
           />
+          <button
+            type="button"
+            onClick={toggleListening}
+            disabled={!speechSupported}
+            className={`inline-flex items-center justify-center rounded-full border border-white/10 bg-surfaceElevated px-4 py-3 text-sm font-semibold text-muted transition hover:text-ink disabled:cursor-not-allowed disabled:opacity-40 ${
+              isListening ? 'ring-2 ring-glow shadow-glow' : ''
+            }`}
+            aria-label={isListening ? 'Stop voice input' : 'Start voice input'}
+          >
+            {isListening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+          </button>
           <button
             type="submit"
             disabled={isLoading || !input.trim()}
