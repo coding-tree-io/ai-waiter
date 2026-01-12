@@ -1,12 +1,8 @@
 'use client';
 
-import React, { createContext, useContext, useMemo, useState } from 'react';
-import { MENU_ITEMS } from '@/lib/data/menu';
-
-export type CartLine = {
-  itemId: string;
-  quantity: number;
-};
+import React, {createContext, useContext, useMemo, useState} from 'react';
+import {MENU_ITEMS} from '@/lib/data/menu';
+import type {CartLine} from '@/lib/types/cart';
 
 type CartContextValue = {
   items: CartLine[];
@@ -44,18 +40,16 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const clearCart = () => setItems([]);
 
   const { totalItems, totalPrice } = useMemo(() => {
-    const totals = items.reduce(
-      (acc, item) => {
-        const menuItem = MENU_ITEMS.find((menu) => menu.id === item.itemId);
-        const linePrice = menuItem ? menuItem.price * item.quantity : 0;
-        acc.totalItems += item.quantity;
-        acc.totalPrice += linePrice;
-        return acc;
-      },
-      { totalItems: 0, totalPrice: 0 }
+      return items.reduce(
+        (acc, item) => {
+            const menuItem = MENU_ITEMS.find((menu) => menu.id === item.itemId);
+            const linePrice = menuItem ? menuItem.price * item.quantity : 0;
+            acc.totalItems += item.quantity;
+            acc.totalPrice += linePrice;
+            return acc;
+        },
+        {totalItems: 0, totalPrice: 0}
     );
-
-    return totals;
   }, [items]);
 
   const value = useMemo(

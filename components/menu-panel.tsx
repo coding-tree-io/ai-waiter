@@ -6,6 +6,7 @@ import { MinusCircle, PlusCircle, ShoppingBag } from 'lucide-react';
 import { MENU_ITEMS } from '@/lib/data/menu';
 import { useCart } from '@/context/cart-context';
 import { formatPrice } from '@/lib/utils/format';
+import type { CartLineSummary } from '@/lib/types/cart';
 
 export function MenuPanel() {
   const { items, addToCart, removeFromCart, totalItems, totalPrice } = useCart();
@@ -43,19 +44,20 @@ export function MenuPanel() {
     };
   }, []);
 
-  const cartLines = useMemo(
+  const cartLines = useMemo<CartLineSummary[]>(
     () =>
-      items
-        .map((line) => {
-          const menuItem = MENU_ITEMS.find((menu) => menu.id === line.itemId);
-          if (!menuItem) return null;
-          return {
-            ...menuItem,
-            quantity: line.quantity,
-            lineTotal: line.quantity * menuItem.price
-          };
-        })
-        .filter(Boolean),
+      items.reduce<CartLineSummary[]>((acc, line) => {
+        const menuItem = MENU_ITEMS.find((menu) => menu.id === line.itemId);
+        if (!menuItem) return acc;
+        acc.push({
+          itemId: menuItem.id,
+          name: menuItem.name,
+          quantity: line.quantity,
+          price: menuItem.price,
+          lineTotal: line.quantity * menuItem.price
+        });
+        return acc;
+      }, []),
     [items]
   );
 
@@ -63,7 +65,7 @@ export function MenuPanel() {
     <section className="flex min-h-screen flex-col overflow-hidden border-b border-white/10 bg-surface/70 backdrop-blur-2xl lg:min-h-0 lg:h-full lg:border-b-0 lg:border-r">
       <header className="px-5 pb-4 pt-8 sm:px-8">
         <p className="text-xs uppercase tracking-[0.3em] text-muted">Restaurant Floor</p>
-        <h1 className="mt-3 font-[var(--font-orbitron)] text-4xl text-ink">
+        <h1 className="mt-3 font-[var(--font-display)] text-4xl text-ink">
           Smart Waiter Menu
         </h1>
         <p className="mt-3 max-w-xl text-sm text-muted">
@@ -135,7 +137,7 @@ export function MenuPanel() {
             <p className="text-sm text-muted">Your cart is empty. Ask the waiter for suggestions.</p>
           )}
           {cartLines.map((line) => (
-            <div key={line.id} className="flex items-center justify-between text-sm">
+            <div key={line.itemId} className="flex items-center justify-between text-sm">
               <div>
                 <p className="font-semibold text-ink">{line.name}</p>
                 <p className="text-xs text-muted">
@@ -146,7 +148,7 @@ export function MenuPanel() {
                 <span className="font-semibold text-ink">{formatPrice(line.lineTotal)}</span>
                 <button
                   type="button"
-                  onClick={() => removeFromCart(line.id)}
+                  onClick={() => removeFromCart(line.itemId)}
                   className="inline-flex items-center justify-center rounded-full border border-white/10 bg-surface p-1 text-muted transition hover:text-ink"
                 >
                   <MinusCircle className="h-4 w-4" />

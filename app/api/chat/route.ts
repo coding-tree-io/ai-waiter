@@ -2,16 +2,9 @@ import { streamText, tool } from 'ai';
 import { openai } from '@ai-sdk/openai';
 import { z } from 'zod';
 import { MENU_ITEMS } from '@/lib/data/menu';
+import type { CartLine, CartLineSummary } from '@/lib/types/cart';
 
 export const runtime = 'edge';
-
-type CartLineSummary = {
-  itemId: string;
-  name: string;
-  quantity: number;
-  price: number;
-  lineTotal: number;
-};
 
 const menuSummary = MENU_ITEMS.map(
   (item) =>
@@ -20,7 +13,15 @@ const menuSummary = MENU_ITEMS.map(
 
 export async function POST(req: Request) {
   const { messages, cart } = await req.json();
-  const cartSnapshot = Array.isArray(cart) ? cart : [];
+  const cartSchema = z
+    .array(
+      z.object({
+        itemId: z.string(),
+        quantity: z.number().int().min(0)
+      })
+    )
+    .default([]);
+  const cartSnapshot = cartSchema.parse(cart) as CartLine[];
 
   const result = await streamText({
     model: openai('gpt-4o'),

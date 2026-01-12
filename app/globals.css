@@ -4,6 +4,8 @@
 
 :root {
   color-scheme: light;
+  --font-body: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  --font-display: "Trebuchet MS", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
 }
 
 body {

@@ -1,20 +1,7 @@
 import type { Metadata } from 'next';
-import { Orbitron, Space_Grotesk } from 'next/font/google';
 import './globals.css';
 import { CartProvider } from '@/context/cart-context';
 import { ChatProvider } from '@/context/chat-context';
-
-const space = Space_Grotesk({
-  subsets: ['latin'],
-  variable: '--font-space',
-  display: 'swap'
-});
-
-const orbitron = Orbitron({
-  subsets: ['latin'],
-  variable: '--font-orbitron',
-  display: 'swap'
-});
 
 export const metadata: Metadata = {
   title: 'Smart Waiter',
@@ -27,8 +14,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${space.variable} ${orbitron.variable}`}>
-      <body className="min-h-screen font-[var(--font-space)]">
+    <html lang="en">
+      <body className="min-h-screen font-[var(--font-body)]">
         <CartProvider>
           <ChatProvider>{children}</ChatProvider>
         </CartProvider>

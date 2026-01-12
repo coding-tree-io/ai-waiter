@@ -76,7 +76,7 @@ export function ChatPanel({ onMenuLinkClick }: { onMenuLinkClick?: () => void })
           </div>
           <div>
             <p className="text-xs uppercase tracking-[0.3em] text-muted">AI Waiter</p>
-            <h2 className="font-[var(--font-orbitron)] text-2xl text-ink">
+            <h2 className="font-[var(--font-display)] text-2xl text-ink">
               Concierge Chat
             </h2>
           </div>

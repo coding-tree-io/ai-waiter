@@ -7,6 +7,7 @@ import { MenuPanel } from '@/components/menu-panel';
 import { useCart } from '@/context/cart-context';
 import { formatPrice } from '@/lib/utils/format';
 import { MENU_ITEMS } from '@/lib/data/menu';
+import type { CartLineSummary } from '@/lib/types/cart';
 
 export function MobileShell() {
   const [isChatOpen, setIsChatOpen] = useState(false);
@@ -14,17 +15,18 @@ export function MobileShell() {
   const { totalItems, totalPrice } = useCart();
   const { items, removeFromCart } = useCart();
 
-  const cartLines = items
-    .map((line) => {
-      const menuItem = MENU_ITEMS.find((item) => item.id === line.itemId);
-      if (!menuItem) return null;
-      return {
-        ...menuItem,
-        quantity: line.quantity,
-        lineTotal: line.quantity * menuItem.price
-      };
-    })
-    .filter(Boolean);
+  const cartLines: CartLineSummary[] = items.reduce<CartLineSummary[]>((acc, line) => {
+    const menuItem = MENU_ITEMS.find((item) => item.id === line.itemId);
+    if (!menuItem) return acc;
+    acc.push({
+      itemId: menuItem.id,
+      name: menuItem.name,
+      quantity: line.quantity,
+      price: menuItem.price,
+      lineTotal: line.quantity * menuItem.price
+    });
+    return acc;
+  }, []);
 
   return (
     <div className="relative z-10 min-h-screen">
@@ -91,7 +93,7 @@ export function MobileShell() {
               <div className="space-y-4">
                 {cartLines.map((line) => (
                   <div
-                    key={line.id}
+                    key={line.itemId}
                     className="flex items-center justify-between rounded-2xl border border-white/10 bg-surfaceElevated p-4"
                   >
                     <div>
@@ -106,7 +108,7 @@ export function MobileShell() {
                       </span>
                       <button
                         type="button"
-                        onClick={() => removeFromCart(line.id)}
+                        onClick={() => removeFromCart(line.itemId)}
                         className="inline-flex items-center justify-center rounded-full border border-white/10 bg-surface p-1 text-muted transition hover:text-ink"
                         aria-label={`Remove ${line.name}`}
                       >

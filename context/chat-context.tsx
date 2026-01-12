@@ -4,6 +4,7 @@ import React, { createContext, useContext, useEffect, useRef } from 'react';
 import { useChat } from 'ai/react';
 import { useCart } from '@/context/cart-context';
 import { MENU_ITEMS } from '@/lib/data/menu';
+import type { CartLine } from '@/lib/types/cart';
 
 type ChatContextValue = ReturnType<typeof useChat>;
 
@@ -24,7 +25,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
   const chat = useChat({
     api: '/api/chat',
     body: {
-      cart: items
+      cart: items as CartLine[]
     }
   });
 
