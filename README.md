@@ -1,5 +1,5 @@
 # Smart Waiter
-[![CI](https://github.com/REPLACE_OWNER/REPLACE_REPO/actions/workflows/ci.yml/badge.svg)](https://github.com/REPLACE_OWNER/REPLACE_REPO/actions/workflows/ci.yml)
+[![CI](https://github.com/coding-tree-io/ai-waiter/actions/workflows/ci.yml/badge.svg)](https://github.com/coding-tree-io/ai-waiter/actions/workflows/ci.yml)
 
 ## AI Capabilities
 - Tool calling via `streamText` with explicit tools (`addToCart`, `removeFromCart`, `getMenu`, `getCart`).
