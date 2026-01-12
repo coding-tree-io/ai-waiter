@@ -133,6 +133,12 @@ export function ChatPanel({ onMenuLinkClick }: { onMenuLinkClick?: () => void })
     () => (messages as UIMessage[]).filter((message) => message.role !== 'system'),
     [messages]
   );
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!scrollRef.current) return;
+    scrollRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
+  }, [orderedMessages]);
 
   return (
     <section className="flex h-full min-h-0 flex-col bg-surface/70 backdrop-blur-2xl">
@@ -158,14 +164,7 @@ export function ChatPanel({ onMenuLinkClick }: { onMenuLinkClick?: () => void })
             </div>
           )}
 
-          {orderedMessages.map((message) => {
-            const textContent = message.parts
-              .filter(isTextUIPart)
-              .map((part) => part.text)
-              .join('');
-            const toolParts = message.parts.filter(isStaticToolUIPart);
-
-            return (
+          {orderedMessages.map((message) => (
             <div
               key={message.id}
               className={`flex ${
@@ -173,39 +172,42 @@ export function ChatPanel({ onMenuLinkClick }: { onMenuLinkClick?: () => void })
               }`}
             >
               <div className="space-y-2">
-                {textContent && (
-                  <div
-                    className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm shadow-sm ${
-                      message.role === 'user'
-                        ? 'bg-accent text-white shadow-glow'
-                        : 'bg-surfaceElevated text-ink border border-white/10'
-                    }`}
-                  >
-                    <ReactMarkdown
-                      components={{
-                        a: ({ href, children }) => (
-                          <button
-                            type="button"
-                            onClick={() => scrollToMenuAnchor(href, onMenuLinkClick)}
-                            className="font-semibold text-accent underline decoration-transparent underline-offset-4 transition hover:text-glow hover:decoration-glow"
-                          >
-                            {children}
-                          </button>
-                        )
-                      }}
-                    >
-                      {textContent}
-                    </ReactMarkdown>
-                  </div>
-                )}
-                {toolParts
-                  .filter((part) => part.state === 'output-available')
-                  .map((part) => {
+                {message.parts.map((part, index) => {
+                  if (isTextUIPart(part)) {
+                    return (
+                      <div
+                        key={`${message.id}-text-${index}`}
+                        className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm shadow-sm ${
+                          message.role === 'user'
+                            ? 'bg-accent text-white shadow-glow'
+                            : 'bg-surfaceElevated text-ink border border-white/10'
+                        }`}
+                      >
+                        <ReactMarkdown
+                          components={{
+                            a: ({ href, children }) => (
+                              <button
+                                type="button"
+                                onClick={() => scrollToMenuAnchor(href, onMenuLinkClick)}
+                                className="font-semibold text-accent underline decoration-transparent underline-offset-4 transition hover:text-glow hover:decoration-glow"
+                              >
+                                {children}
+                              </button>
+                            )
+                          }}
+                        >
+                          {part.text}
+                        </ReactMarkdown>
+                      </div>
+                    );
+                  }
+
+                  if (isStaticToolUIPart(part) && part.state === 'output-available') {
                     const toolMessage = getToolMessage(part);
                     if (!toolMessage) return null;
                     return (
                       <div
-                        key={part.toolCallId}
+                        key={`${message.id}-tool-${part.toolCallId}`}
                         className="max-w-[80%] rounded-2xl border border-white/10 bg-surfaceElevated px-4 py-2 text-xs text-muted"
                       >
                         <ReactMarkdown
@@ -225,11 +227,14 @@ export function ChatPanel({ onMenuLinkClick }: { onMenuLinkClick?: () => void })
                         </ReactMarkdown>
                       </div>
                     );
-                  })}
+                  }
+
+                  return null;
+                })}
               </div>
             </div>
-          );
-          })}
+          ))}
+          <div ref={scrollRef} />
         </div>
       </div>
 
