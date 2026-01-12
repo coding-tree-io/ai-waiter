@@ -5,6 +5,14 @@ import { MENU_ITEMS } from '@/lib/data/menu';
 
 export const runtime = 'edge';
 
+type CartLineSummary = {
+  itemId: string;
+  name: string;
+  quantity: number;
+  price: number;
+  lineTotal: number;
+};
+
 const menuSummary = MENU_ITEMS.map(
   (item) =>
     `${item.id} - ${item.name} (${item.price.toFixed(2)} EUR): ${item.description} [${item.category}] (link: #menu-${item.id})`
@@ -25,7 +33,7 @@ export async function POST(req: Request) {
         description: 'Get the current cart contents and quantities with names and prices.',
         parameters: z.object({}),
         execute: async () => {
-          const lines = cartSnapshot
+          const lines: CartLineSummary[] = cartSnapshot
             .map((line: { itemId?: string; quantity?: number }) => {
               const item = MENU_ITEMS.find((menuItem) => menuItem.id === line.itemId);
               if (!item) return null;
@@ -38,12 +46,9 @@ export async function POST(req: Request) {
                 lineTotal: Number((item.price * quantity).toFixed(2))
               };
             })
-            .filter(Boolean);
+            .filter((line): line is CartLineSummary => Boolean(line));
 
-          const total = lines.reduce(
-            (sum: number, line: { lineTotal: number }) => sum + line.lineTotal,
-            0
-          );
+          const total = lines.reduce((sum, line) => sum + line.lineTotal, 0);
 
           return {
             currency: 'EUR',
