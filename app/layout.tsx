@@ -5,7 +5,11 @@ import { ChatProvider } from '@/context/chat-context';
 
 export const metadata: Metadata = {
   title: 'Smart Waiter',
-  description: 'AI-powered ordering with tool calling.'
+  description: 'AI-powered ordering with tool calling.',
+  icons: {
+    icon: '/favicon.svg',
+    apple: '/apple-touch-icon.svg'
+  }
 };
 
 export default function RootLayout({

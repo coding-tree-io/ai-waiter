@@ -10,7 +10,7 @@ import { isStaticToolUIPart, isTextUIPart, type ToolUIPart, type UIMessage } fro
 const QUICK_PROMPTS = [
   'Build a spicy combo with a drink.',
   'I want a light vegetarian starter and dessert.',
-  'Surprise me with a full meal under $25.'
+  'Surprise me with a full meal under €25.'
 ];
 
 const menuById = new Map(MENU_ITEMS.map((item) => [item.id, item]));
@@ -150,7 +150,7 @@ export function ChatPanel({ onMenuLinkClick }: { onMenuLinkClick?: () => void })
           <div>
             <p className="text-xs uppercase tracking-[0.3em] text-muted">AI Waiter</p>
             <h2 className="font-[var(--font-display)] text-2xl text-ink">
-              Concierge Chat
+                Chat
             </h2>
           </div>
         </div>
