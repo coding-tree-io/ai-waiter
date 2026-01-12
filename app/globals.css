@@ -6,16 +6,23 @@
   color-scheme: light;
   --font-body: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
   --font-display: "Trebuchet MS", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  --color-canvas: #0b0f14;
+  --color-canvas-accent: #1a0f14;
+  --color-scrollbar: #2b1c22;
+  --color-gridline: rgba(199, 90, 116, 0.12);
+  --color-orb-one: rgba(199, 90, 116, 0.6);
+  --color-orb-two: rgba(164, 63, 85, 0.5);
+  --color-orb-three: rgba(139, 31, 58, 0.45);
 }
 
 body {
   @apply bg-canvas text-ink antialiased;
-  background-image: radial-gradient(circle at top, #1b2433, #0b0f14 45%);
+  background-image: radial-gradient(circle at top, var(--color-canvas-accent), var(--color-canvas) 45%);
 }
 
 * {
   scrollbar-width: thin;
-  scrollbar-color: #2a3445 transparent;
+  scrollbar-color: var(--color-scrollbar) transparent;
 }
 
 *::-webkit-scrollbar {
@@ -24,7 +31,7 @@ body {
 }
 
 *::-webkit-scrollbar-thumb {
-  background-color: #2a3445;
+  background-color: var(--color-scrollbar);
   border-radius: 999px;
 }
 
@@ -38,8 +45,8 @@ body {
 .gridlines {
   position: absolute;
   inset: 0;
-  background-image: linear-gradient(rgba(122, 162, 255, 0.08) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(122, 162, 255, 0.08) 1px, transparent 1px);
+  background-image: linear-gradient(var(--color-gridline) 1px, transparent 1px),
+    linear-gradient(90deg, var(--color-gridline) 1px, transparent 1px);
   background-size: 120px 120px;
   opacity: 0.25;
   mask-image: radial-gradient(circle at 20% 20%, rgba(0, 0, 0, 0.9), transparent 65%);
@@ -68,7 +75,7 @@ body {
   height: 520px;
   top: -120px;
   right: -140px;
-  background: radial-gradient(circle, rgba(122, 162, 255, 0.7) 0%, rgba(79, 124, 255, 0) 70%);
+  background: radial-gradient(circle, var(--color-orb-one) 0%, rgba(139, 31, 58, 0) 70%);
 }
 
 .orb-two {
@@ -76,7 +83,7 @@ body {
   height: 420px;
   bottom: -120px;
   left: -120px;
-  background: radial-gradient(circle, rgba(98, 224, 255, 0.55) 0%, rgba(98, 224, 255, 0) 70%);
+  background: radial-gradient(circle, var(--color-orb-two) 0%, rgba(164, 63, 85, 0) 70%);
   animation-delay: -4s;
 }
 
@@ -85,7 +92,7 @@ body {
   height: 320px;
   top: 35%;
   left: 55%;
-  background: radial-gradient(circle, rgba(255, 121, 198, 0.45) 0%, rgba(255, 121, 198, 0) 70%);
+  background: radial-gradient(circle, var(--color-orb-three) 0%, rgba(139, 31, 58, 0) 70%);
   animation-delay: -8s;
 }
 
