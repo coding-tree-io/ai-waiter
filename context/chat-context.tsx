@@ -1,60 +1,73 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useRef } from 'react';
-import { useChat } from 'ai/react';
+import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
+import { useChat } from '@ai-sdk/react';
 import { useCart } from '@/context/cart-context';
 import { MENU_ITEMS } from '@/lib/data/menu';
 import type { CartLine } from '@/lib/types/cart';
+import { DefaultChatTransport, isStaticToolUIPart, type UIMessage } from 'ai';
 
 type ChatContextValue = ReturnType<typeof useChat>;
-
-type ToolInvocation = {
-  toolCallId: string;
-  toolName: string;
-  args: Record<string, unknown>;
-  state: 'call' | 'result';
-  result?: unknown;
-};
 
 const ChatContext = createContext<ChatContextValue | undefined>(undefined);
 
 export function ChatProvider({ children }: { children: React.ReactNode }) {
   const { items, addToCart, removeFromCart } = useCart();
   const handledToolCalls = useRef(new Set<string>());
+  const cartRef = useRef(items);
+  const [transport] = useState(
+    // eslint-disable-next-line react-hooks/refs
+    () =>
+      new DefaultChatTransport({
+        api: '/api/chat',
+        body: () => ({
+          cart: cartRef.current as CartLine[]
+        })
+      })
+  );
 
-  const chat = useChat({
-    api: '/api/chat',
-    body: {
-      cart: items as CartLine[]
+  useEffect(() => {
+    cartRef.current = items;
+  }, [items]);
+
+  const chat = useChat<UIMessage>({
+    transport,
+    onError: (error) => {
+      console.error('Chat error:', error);
+    },
+    onFinish: ({ messages }) => {
+      console.debug('Chat finished with messages:', messages);
     }
   });
 
   useEffect(() => {
     chat.messages.forEach((message) => {
-      const toolInvocations = (message as { toolInvocations?: ToolInvocation[] })
-        .toolInvocations;
-      if (!toolInvocations) return;
+      message.parts.forEach((part) => {
+        if (!isStaticToolUIPart(part) || part.state !== 'output-available') return;
+        const toolCallId = part.toolCallId;
+        if (handledToolCalls.current.has(toolCallId)) return;
 
-      toolInvocations.forEach((invocation) => {
-        if (invocation.state !== 'result') return;
-        if (handledToolCalls.current.has(invocation.toolCallId)) return;
+        const toolName = part.type.startsWith('tool-') ? part.type.slice(5) : null;
+        if (!toolName) return;
 
-        if (invocation.toolName === 'addToCart') {
-          const itemId = String(invocation.args.itemId ?? '');
-          const quantity = Number(invocation.args.quantity ?? 1);
+        if (toolName === 'addToCart') {
+          const input = part.input as { itemId?: string; quantity?: number };
+          const itemId = String(input.itemId ?? '');
+          const quantity = Number(input.quantity ?? 1);
           if (MENU_ITEMS.some((item) => item.id === itemId)) {
             addToCart(itemId, quantity);
           }
         }
 
-        if (invocation.toolName === 'removeFromCart') {
-          const itemId = String(invocation.args.itemId ?? '');
+        if (toolName === 'removeFromCart') {
+          const input = part.input as { itemId?: string };
+          const itemId = String(input.itemId ?? '');
           if (MENU_ITEMS.some((item) => item.id === itemId)) {
             removeFromCart(itemId);
           }
         }
 
-        handledToolCalls.current.add(invocation.toolCallId);
+        handledToolCalls.current.add(toolCallId);
       });
     });
   }, [chat.messages, addToCart, removeFromCart]);

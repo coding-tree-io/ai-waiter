@@ -49,14 +49,16 @@ export function MobileShell() {
           </div>
         </button>
 
-        <button
-          type="button"
-          onClick={() => setIsChatOpen((prev) => !prev)}
-          className="fixed bottom-5 right-5 z-30 inline-flex h-14 w-14 items-center justify-center rounded-full bg-accent text-white shadow-glow transition hover:bg-accentDark"
-          aria-label={isChatOpen ? 'Minimize chat' : 'Open chat'}
-        >
-          {isChatOpen ? <X className="h-5 w-5" /> : <MessageCircle className="h-5 w-5" />}
-        </button>
+        {!isChatOpen && (
+          <button
+            type="button"
+            onClick={() => setIsChatOpen(true)}
+            className="fixed bottom-5 right-5 z-30 inline-flex h-14 w-14 items-center justify-center rounded-full bg-accent text-white shadow-glow transition hover:bg-accentDark"
+            aria-label="Open chat"
+          >
+            <MessageCircle className="h-5 w-5" />
+          </button>
+        )}
 
         <div
           className={`fixed inset-0 z-30 transition ${isCartOpen ? 'visible' : 'invisible'}`}

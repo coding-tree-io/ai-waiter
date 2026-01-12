@@ -207,6 +207,6 @@ export const MENU_ITEMS: MenuItem[] = [
     category: 'dessert',
     tags: ['sweet', 'rich'],
     image:
-      'https://images.unsplash.com/photo-1505250469679-203ad9ced0cb?auto=format&fit=crop&w=800&q=80'
+      'https://images.unsplash.com/photo-1754652327423-4e71f0d71b25?auto=format&fit=crop&w=800&q=80'
   }
 ];

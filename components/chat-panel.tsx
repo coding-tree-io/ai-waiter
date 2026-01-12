@@ -5,6 +5,7 @@ import { Mic, MicOff, SendHorizontal, Sparkles } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { useChatContext } from '@/context/chat-context';
 import { MENU_ITEMS } from '@/lib/data/menu';
+import { isStaticToolUIPart, isTextUIPart, type ToolUIPart, type UIMessage } from 'ai';
 
 const QUICK_PROMPTS = [
   'Build a spicy combo with a drink.',
@@ -14,31 +15,28 @@ const QUICK_PROMPTS = [
 
 const menuById = new Map(MENU_ITEMS.map((item) => [item.id, item]));
 
-type ToolInvocation = {
-  toolCallId: string;
-  toolName: string;
-  args: Record<string, unknown>;
-  state: 'call' | 'result';
-  result?: unknown;
-};
+function getToolMessage(part: ToolUIPart) {
+  const toolName = part.type.startsWith('tool-') ? part.type.slice(5) : null;
+  if (!toolName) return null;
 
-function getToolMessage(invocation: ToolInvocation) {
-  if (invocation.toolName === 'addToCart') {
-    const itemId = String(invocation.args.itemId ?? '');
-    const quantity = Number(invocation.args.quantity ?? 1);
+  if (toolName === 'addToCart') {
+    const input = part.input as { itemId?: string; quantity?: number };
+    const itemId = String(input.itemId ?? '');
+    const quantity = Number(input.quantity ?? 1);
     const item = menuById.get(itemId);
     const name = item?.name ?? itemId;
     return `Added ${quantity} x [${name}](#menu-${itemId}) to the cart.`;
   }
 
-  if (invocation.toolName === 'removeFromCart') {
-    const itemId = String(invocation.args.itemId ?? '');
+  if (toolName === 'removeFromCart') {
+    const input = part.input as { itemId?: string };
+    const itemId = String(input.itemId ?? '');
     const item = menuById.get(itemId);
     const name = item?.name ?? itemId;
     return `Removed [${name}](#menu-${itemId}) from the cart.`;
   }
 
-  if (invocation.toolName === 'getCart') {
+  if (toolName === 'getCart') {
     return 'Checked the current cart.';
   }
 
@@ -70,23 +68,16 @@ type SpeechRecognitionConstructor = new () => {
 };
 
 export function ChatPanel({ onMenuLinkClick }: { onMenuLinkClick?: () => void }) {
-  const {
-    messages,
-    input,
-    handleInputChange,
-    handleSubmit,
-    isLoading,
-    append,
-    setInput
-  } =
-    useChatContext();
+  const { messages, sendMessage, status } = useChatContext();
+  const [input, setInput] = useState('');
+  const isLoading = status === 'submitted' || status === 'streaming';
   const [isListening, setIsListening] = useState(false);
   const recognitionRef = useRef<InstanceType<SpeechRecognitionConstructor> | null>(null);
-  const speechSupported =
-    typeof window !== 'undefined' &&
-    ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window);
+  const [speechSupported, setSpeechSupported] = useState(false);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setSpeechSupported('SpeechRecognition' in window || 'webkitSpeechRecognition' in window);
     const SpeechRecognition =
       ((window as unknown as { SpeechRecognition?: SpeechRecognitionConstructor })
         .SpeechRecognition ||
@@ -139,7 +130,7 @@ export function ChatPanel({ onMenuLinkClick }: { onMenuLinkClick?: () => void })
   };
 
   const orderedMessages = useMemo(
-    () => messages.filter((message) => message.role !== 'system'),
+    () => (messages as UIMessage[]).filter((message) => message.role !== 'system'),
     [messages]
   );
 
@@ -167,7 +158,14 @@ export function ChatPanel({ onMenuLinkClick }: { onMenuLinkClick?: () => void })
             </div>
           )}
 
-          {orderedMessages.map((message) => (
+          {orderedMessages.map((message) => {
+            const textContent = message.parts
+              .filter(isTextUIPart)
+              .map((part) => part.text)
+              .join('');
+            const toolParts = message.parts.filter(isStaticToolUIPart);
+
+            return (
             <div
               key={message.id}
               className={`flex ${
@@ -175,7 +173,7 @@ export function ChatPanel({ onMenuLinkClick }: { onMenuLinkClick?: () => void })
               }`}
             >
               <div className="space-y-2">
-                {message.content && (
+                {textContent && (
                   <div
                     className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm shadow-sm ${
                       message.role === 'user'
@@ -196,18 +194,18 @@ export function ChatPanel({ onMenuLinkClick }: { onMenuLinkClick?: () => void })
                         )
                       }}
                     >
-                      {message.content}
+                      {textContent}
                     </ReactMarkdown>
                   </div>
                 )}
-                {(message as { toolInvocations?: ToolInvocation[] }).toolInvocations
-                  ?.filter((invocation) => invocation.state === 'result')
-                  .map((invocation) => {
-                    const toolMessage = getToolMessage(invocation);
+                {toolParts
+                  .filter((part) => part.state === 'output-available')
+                  .map((part) => {
+                    const toolMessage = getToolMessage(part);
                     if (!toolMessage) return null;
                     return (
                       <div
-                        key={invocation.toolCallId}
+                        key={part.toolCallId}
                         className="max-w-[80%] rounded-2xl border border-white/10 bg-surfaceElevated px-4 py-2 text-xs text-muted"
                       >
                         <ReactMarkdown
@@ -230,7 +228,8 @@ export function ChatPanel({ onMenuLinkClick }: { onMenuLinkClick?: () => void })
                   })}
               </div>
             </div>
-          ))}
+          );
+          })}
         </div>
       </div>
 
@@ -240,17 +239,26 @@ export function ChatPanel({ onMenuLinkClick }: { onMenuLinkClick?: () => void })
             <button
               key={prompt}
               type="button"
-              onClick={() => append({ role: 'user', content: prompt })}
+              onClick={() => sendMessage({ text: prompt })}
               className="rounded-full border border-white/10 bg-surfaceElevated px-3 py-1 text-[11px] uppercase tracking-[0.2em] text-muted transition hover:border-white/30 hover:text-ink"
             >
               {prompt}
             </button>
           ))}
         </div>
-        <form onSubmit={handleSubmit} className="flex items-center gap-3">
+        <form
+          onSubmit={(event) => {
+            event.preventDefault();
+            const trimmed = input.trim();
+            if (!trimmed) return;
+            sendMessage({ text: trimmed });
+            setInput('');
+          }}
+          className="flex items-center gap-3"
+        >
           <input
             value={input}
-            onChange={handleInputChange}
+            onChange={(event) => setInput(event.target.value)}
             placeholder="Ask for recommendations, edits, or full orders..."
             className="flex-1 rounded-full border border-white/10 bg-surfaceElevated px-4 py-3 text-sm text-ink shadow-sm focus:border-white/40 focus:outline-none"
           />
