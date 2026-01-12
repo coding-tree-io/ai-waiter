@@ -8,6 +8,8 @@ import { useCart } from '@/context/cart-context';
 import { MENU_ITEMS } from '@/lib/data/menu';
 import { formatPrice } from '@/lib/utils/format';
 import { isStaticToolUIPart, isTextUIPart, type ToolUIPart, type UIMessage } from 'ai';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
 const QUICK_PROMPTS = [
   'Build a spicy combo with a drink.',
@@ -255,40 +257,45 @@ export function ChatPanel({ onMenuLinkClick }: { onMenuLinkClick?: () => void })
                               const canAction = Boolean(menuItemId) && message.role === 'assistant';
                               return (
                                 <span className="inline-flex items-center gap-2">
-                                  <button
+                                  <Button
                                     type="button"
+                                    variant="ghost"
                                     onClick={() => scrollToMenuAnchor(href, onMenuLinkClick)}
-                                    className={linkTone}
+                                    className={`${linkTone} h-auto p-0`}
                                   >
                                     {children}
-                                  </button>
+                                  </Button>
                                   {canAction && (
                                     <>
-                                      <button
+                                      <Button
                                         type="button"
+                                        size="icon"
+                                        variant="outline"
                                         onClick={() => {
                                           if (!menuItemId) return;
                                           handleAddFromMenu(menuItemId);
                                         }}
                                         disabled={isLoading}
-                                        className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-white/10 bg-surfaceElevated text-xs font-semibold text-muted transition hover:border-white/30 hover:text-ink"
+                                        className="h-6 w-6 border-white/10 bg-surfaceElevated text-xs font-semibold text-muted hover:border-white/30 hover:text-ink"
                                         aria-label={`Add ${menuItem?.name ?? 'item'} to cart`}
                                       >
                                         +
-                                      </button>
+                                      </Button>
                                       {isInCart && (
-                                        <button
+                                        <Button
                                           type="button"
+                                          size="icon"
+                                          variant="outline"
                                           onClick={() => {
                                             if (!menuItemId) return;
                                             handleRemoveFromMenu(menuItemId);
                                           }}
                                           disabled={isLoading}
-                                          className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-white/10 bg-surfaceElevated text-xs font-semibold text-muted transition hover:border-white/30 hover:text-ink"
+                                          className="h-6 w-6 border-white/10 bg-surfaceElevated text-xs font-semibold text-muted hover:border-white/30 hover:text-ink"
                                           aria-label={`Remove ${menuItem?.name ?? 'item'} from cart`}
                                         >
                                           -
-                                        </button>
+                                        </Button>
                                       )}
                                     </>
                                   )}
@@ -325,40 +332,45 @@ export function ChatPanel({ onMenuLinkClick }: { onMenuLinkClick?: () => void })
                               const canAction = Boolean(menuItemId) && message.role === 'assistant';
                               return (
                                 <span className="inline-flex items-center gap-2">
-                                  <button
+                                  <Button
                                     type="button"
+                                    variant="ghost"
                                     onClick={() => scrollToMenuAnchor(href, onMenuLinkClick)}
-                                    className={linkTone}
+                                    className={`${linkTone} h-auto p-0`}
                                   >
                                     {children}
-                                  </button>
+                                  </Button>
                                   {canAction && (
                                     <>
-                                      <button
+                                      <Button
                                         type="button"
+                                        size="icon"
+                                        variant="outline"
                                         onClick={() => {
                                           if (!menuItemId) return;
                                           handleAddFromMenu(menuItemId);
                                         }}
                                         disabled={isLoading}
-                                        className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-white/10 bg-surfaceElevated text-xs font-semibold text-muted transition hover:border-white/30 hover:text-ink"
+                                        className="h-6 w-6 border-white/10 bg-surfaceElevated text-xs font-semibold text-muted hover:border-white/30 hover:text-ink"
                                         aria-label={`Add ${menuItem?.name ?? 'item'} to cart`}
                                       >
                                         +
-                                      </button>
+                                      </Button>
                                       {isInCart && (
-                                        <button
+                                        <Button
                                           type="button"
+                                          size="icon"
+                                          variant="outline"
                                           onClick={() => {
                                             if (!menuItemId) return;
                                             handleRemoveFromMenu(menuItemId);
                                           }}
                                           disabled={isLoading}
-                                          className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-white/10 bg-surfaceElevated text-xs font-semibold text-muted transition hover:border-white/30 hover:text-ink"
+                                          className="h-6 w-6 border-white/10 bg-surfaceElevated text-xs font-semibold text-muted hover:border-white/30 hover:text-ink"
                                           aria-label={`Remove ${menuItem?.name ?? 'item'} from cart`}
                                         >
                                           -
-                                        </button>
+                                        </Button>
                                       )}
                                     </>
                                   )}
@@ -392,14 +404,16 @@ export function ChatPanel({ onMenuLinkClick }: { onMenuLinkClick?: () => void })
       <div className="border-t border-white/10 px-5 py-5 sm:px-8">
         <div className="mb-3 flex flex-wrap gap-2">
           {QUICK_PROMPTS.map((prompt) => (
-            <button
+            <Button
               key={prompt}
               type="button"
+              variant="secondary"
+              size="sm"
               onClick={() => sendMessage({ text: prompt })}
-              className="rounded-full border border-white/10 bg-surfaceElevated px-3 py-1 text-[11px] uppercase tracking-[0.2em] text-muted transition hover:border-white/30 hover:text-ink"
+              className="rounded-full border-white/10 bg-surfaceElevated px-3 py-1 text-[11px] uppercase tracking-[0.2em] text-muted hover:border-white/30 hover:text-ink"
             >
               {prompt}
-            </button>
+            </Button>
           ))}
         </div>
         <form
@@ -412,30 +426,31 @@ export function ChatPanel({ onMenuLinkClick }: { onMenuLinkClick?: () => void })
           }}
           className="flex items-center gap-3"
         >
-          <input
+          <Input
             value={input}
             onChange={(event) => setInput(event.target.value)}
             placeholder="Ask for recommendations, edits, or full orders..."
-            className="flex-1 rounded-full border border-white/10 bg-surfaceElevated px-4 py-3 text-sm text-ink shadow-sm focus:border-white/40 focus:outline-none"
+            className="flex-1"
           />
-          <button
+          <Button
             type="button"
+            variant="secondary"
             onClick={toggleListening}
             disabled={!speechSupported}
-            className={`inline-flex items-center justify-center rounded-full border border-white/10 bg-surfaceElevated px-4 py-3 text-sm font-semibold text-muted transition hover:text-ink disabled:cursor-not-allowed disabled:opacity-40 ${
+            className={`rounded-full border-white/10 bg-surfaceElevated px-4 py-3 text-sm font-semibold text-muted hover:text-ink ${
               isListening ? 'ring-2 ring-glow shadow-glow' : ''
             }`}
             aria-label={isListening ? 'Stop voice input' : 'Start voice input'}
           >
             {isListening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
-          </button>
-          <button
+          </Button>
+          <Button
             type="submit"
             disabled={isLoading || !input.trim()}
-            className="inline-flex items-center justify-center rounded-full bg-accent px-4 py-3 text-sm font-semibold text-white shadow-glow transition hover:bg-accentDark disabled:cursor-not-allowed disabled:opacity-60"
+            className="rounded-full bg-accent px-4 py-3 text-sm font-semibold text-white shadow-glow hover:bg-accentDark"
           >
             <SendHorizontal className="h-4 w-4" />
-          </button>
+          </Button>
         </form>
       </div>
     </section>

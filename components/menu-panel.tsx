@@ -7,6 +7,9 @@ import { MENU_ITEMS } from '@/lib/data/menu';
 import { useCart } from '@/context/cart-context';
 import { formatPrice } from '@/lib/utils/format';
 import type { CartLineSummary } from '@/lib/types/cart';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 
 export function MenuPanel() {
   const { items, addToCart, removeFromCart, totalItems, totalPrice } = useCart();
@@ -76,11 +79,11 @@ export function MenuPanel() {
       <div className="flex-1 overflow-y-auto px-5 pb-28 sm:px-8">
         <div className="grid gap-6 md:grid-cols-2">
           {MENU_ITEMS.map((item) => (
-            <article
+            <Card
               key={item.id}
               id={`menu-${item.id}`}
               tabIndex={-1}
-              className={`group flex h-full flex-col overflow-hidden rounded-2xl border border-white/10 bg-surface/90 shadow-card backdrop-blur transition duration-300 hover:-translate-y-1 hover:border-white/30 hover:shadow-glow ${
+              className={`group flex h-full flex-col overflow-hidden transition duration-300 hover:-translate-y-1 hover:border-white/30 hover:shadow-glow ${
                 highlightedId === `menu-${item.id}`
                   ? 'ring-2 ring-glow shadow-glow'
                   : ''
@@ -99,24 +102,19 @@ export function MenuPanel() {
                 </div>
                 <div className="mt-auto flex flex-wrap gap-2">
                   {item.tags.map((tag) => (
-                    <span
-                      key={tag}
-                      className="rounded-full border border-white/10 bg-surface px-2 py-1 text-[10px] uppercase tracking-[0.2em] text-muted"
-                    >
-                      {tag}
-                    </span>
+                    <Badge key={tag}>{tag}</Badge>
                   ))}
                 </div>
-                <button
+                <Button
                   type="button"
                   onClick={() => addToCart(item.id, 1)}
-                  className="mt-2 inline-flex items-center justify-center gap-2 rounded-full bg-accent px-4 py-2 text-sm font-semibold text-white shadow-glow transition hover:bg-accentDark"
+                  className="mt-2 gap-2 rounded-full bg-accent px-4 py-2 text-sm font-semibold text-white shadow-glow hover:bg-accentDark"
                 >
                   <PlusCircle className="h-4 w-4" />
                   Add to cart
-                </button>
+                </Button>
               </div>
-            </article>
+            </Card>
           ))}
         </div>
       </div>
@@ -146,13 +144,15 @@ export function MenuPanel() {
               </div>
               <div className="flex items-center gap-3">
                 <span className="font-semibold text-ink">{formatPrice(line.lineTotal)}</span>
-                <button
+                <Button
                   type="button"
+                  variant="outline"
+                  size="icon"
                   onClick={() => removeFromCart(line.itemId)}
-                  className="inline-flex items-center justify-center rounded-full border border-white/10 bg-surface p-1 text-muted transition hover:text-ink"
+                  className="h-7 w-7 border-white/10 bg-surface text-muted hover:text-ink"
                 >
                   <MinusCircle className="h-4 w-4" />
-                </button>
+                </Button>
               </div>
             </div>
           ))}

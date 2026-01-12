@@ -8,6 +8,7 @@ import { useCart } from '@/context/cart-context';
 import { formatPrice } from '@/lib/utils/format';
 import { MENU_ITEMS } from '@/lib/data/menu';
 import type { CartLineSummary } from '@/lib/types/cart';
+import { Button } from '@/components/ui/button';
 
 export function MobileShell() {
   const [isChatOpen, setIsChatOpen] = useState(false);
@@ -33,10 +34,11 @@ export function MobileShell() {
       <div className="relative min-h-screen lg:hidden">
         <MenuPanel />
 
-        <button
+        <Button
           type="button"
+          variant="secondary"
           onClick={() => setIsCartOpen(true)}
-          className="fixed bottom-5 left-5 right-20 z-20 rounded-2xl border border-white/10 bg-surface/90 px-4 py-3 text-left backdrop-blur-xl"
+          className="fixed bottom-5 left-5 right-20 z-20 h-auto justify-between rounded-2xl border-white/10 bg-surface/90 px-4 py-3 text-left backdrop-blur-xl"
           aria-label="Open cart"
         >
           <div className="flex items-center justify-between text-xs uppercase tracking-[0.2em] text-muted">
@@ -47,17 +49,17 @@ export function MobileShell() {
             <span>Total</span>
             <span>{formatPrice(totalPrice)}</span>
           </div>
-        </button>
+        </Button>
 
         {!isChatOpen && (
-          <button
+          <Button
             type="button"
             onClick={() => setIsChatOpen(true)}
-            className="fixed bottom-5 right-5 z-30 inline-flex h-14 w-14 items-center justify-center rounded-full bg-accent text-white shadow-glow transition hover:bg-accentDark"
+            className="fixed bottom-5 right-5 z-30 h-14 w-14 rounded-full bg-accent text-white shadow-glow hover:bg-accentDark"
             aria-label="Open chat"
           >
             <MessageCircle className="h-5 w-5" />
-          </button>
+          </Button>
         )}
 
         <div
@@ -79,14 +81,16 @@ export function MobileShell() {
                 <ShoppingBag className="h-4 w-4 text-accent" />
                 Cart Details
               </div>
-              <button
+              <Button
                 type="button"
+                variant="outline"
+                size="icon"
                 onClick={() => setIsCartOpen(false)}
-                className="rounded-full border border-white/10 p-2 text-muted transition hover:text-ink"
+                className="h-8 w-8 border-white/10 text-muted hover:text-ink"
                 aria-label="Close cart"
               >
                 <X className="h-4 w-4" />
-              </button>
+              </Button>
             </div>
             <div className="h-[calc(100%-64px)] overflow-y-auto px-6 py-5">
               {cartLines.length === 0 && (
@@ -108,14 +112,16 @@ export function MobileShell() {
                       <span className="text-sm font-semibold text-ink">
                         {formatPrice(line.lineTotal)}
                       </span>
-                      <button
+                      <Button
                         type="button"
+                        variant="outline"
+                        size="icon"
                         onClick={() => removeFromCart(line.itemId)}
-                        className="inline-flex items-center justify-center rounded-full border border-white/10 bg-surface p-1 text-muted transition hover:text-ink"
+                        className="h-7 w-7 border-white/10 bg-surface text-muted hover:text-ink"
                         aria-label={`Remove ${line.name}`}
                       >
                         <MinusCircle className="h-4 w-4" />
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 ))}
@@ -143,14 +149,16 @@ export function MobileShell() {
             }`}
           >
             <div className="relative h-full">
-              <button
+              <Button
                 type="button"
+                variant="outline"
+                size="icon"
                 onClick={() => setIsChatOpen(false)}
-                className="absolute right-4 top-4 z-10 rounded-full border border-white/10 bg-surface/80 p-2 text-muted transition hover:text-ink"
+                className="absolute right-4 top-4 z-10 h-9 w-9 border-white/10 bg-surface/80 text-muted hover:text-ink"
                 aria-label="Close chat"
               >
                 <X className="h-4 w-4" />
-              </button>
+              </Button>
               <ChatPanel onMenuLinkClick={() => setIsChatOpen(false)} />
             </div>
           </div>
