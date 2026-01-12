@@ -1,0 +1,98 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+body {
+  @apply bg-canvas text-ink antialiased;
+  background-image: radial-gradient(circle at top, #1b2433, #0b0f14 45%);
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #2a3445 transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: #2a3445;
+  border-radius: 999px;
+}
+
+.ambient {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.gridlines {
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(rgba(122, 162, 255, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(122, 162, 255, 0.08) 1px, transparent 1px);
+  background-size: 120px 120px;
+  opacity: 0.25;
+  mask-image: radial-gradient(circle at 20% 20%, rgba(0, 0, 0, 0.9), transparent 65%);
+}
+
+.scanlines {
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(rgba(11, 15, 20, 0.2) 1px, transparent 1px);
+  background-size: 100% 4px;
+  opacity: 0.18;
+  mix-blend-mode: screen;
+}
+
+.orb {
+  position: absolute;
+  border-radius: 999px;
+  filter: blur(0);
+  opacity: 0.6;
+  mix-blend-mode: screen;
+  animation: float 18s ease-in-out infinite;
+}
+
+.orb-one {
+  width: 520px;
+  height: 520px;
+  top: -120px;
+  right: -140px;
+  background: radial-gradient(circle, rgba(122, 162, 255, 0.7) 0%, rgba(79, 124, 255, 0) 70%);
+}
+
+.orb-two {
+  width: 420px;
+  height: 420px;
+  bottom: -120px;
+  left: -120px;
+  background: radial-gradient(circle, rgba(98, 224, 255, 0.55) 0%, rgba(98, 224, 255, 0) 70%);
+  animation-delay: -4s;
+}
+
+.orb-three {
+  width: 320px;
+  height: 320px;
+  top: 35%;
+  left: 55%;
+  background: radial-gradient(circle, rgba(255, 121, 198, 0.45) 0%, rgba(255, 121, 198, 0) 70%);
+  animation-delay: -8s;
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0px) translateX(0px);
+  }
+  50% {
+    transform: translateY(18px) translateX(-12px);
+  }
+}
