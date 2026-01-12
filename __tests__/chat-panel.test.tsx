@@ -118,7 +118,7 @@ describe('ChatPanel tool ordering', () => {
 
     render(<ChatPanel />);
     expect(screen.getByText(/Current cart/i)).toBeInTheDocument();
-    expect(screen.getByText(/Classic Cheeseburger/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/Classic Cheeseburger/i).length).toBeGreaterThan(0);
     const priceText = formatPrice(25.98);
     expect(
       screen.getAllByText((_, element) => element?.textContent?.includes(priceText) ?? false)
@@ -181,6 +181,26 @@ describe('ChatPanel tool ordering', () => {
     expect(next.at(-1)?.parts?.[0]?.text).toBe(
       'Removed [Classic Cheeseburger](#menu-burger-classic) from the cart.'
     );
+  });
+
+  it('renders tooltip labels for add/remove actions', () => {
+    mockCartItems = [{ itemId: 'burger-classic', quantity: 1 }];
+    mockMessages = [
+      {
+        id: 'm-tooltip',
+        role: 'assistant',
+        parts: [
+          {
+            type: 'text',
+            text: 'Try [Classic Cheeseburger](#menu-burger-classic).'
+          }
+        ]
+      }
+    ];
+
+    render(<ChatPanel />);
+    expect(screen.getByText('Add Classic Cheeseburger to cart')).toBeInTheDocument();
+    expect(screen.getByText('Remove Classic Cheeseburger from cart')).toBeInTheDocument();
   });
 
   it('does not show add buttons for user messages', () => {

@@ -41,11 +41,11 @@ export function MobileShell() {
           className="fixed bottom-5 left-5 right-20 z-20 h-auto justify-between rounded-2xl border-white/10 bg-surface/90 px-4 py-3 text-left backdrop-blur-xl"
           aria-label="Open cart"
         >
-          <div className="flex items-center justify-between text-xs uppercase tracking-[0.2em] text-muted">
-            <span>Mini Cart</span>
+          <div className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-muted">
+            <ShoppingBag className="h-4 w-4 text-accent" />
             <span>{totalItems} items</span>
           </div>
-          <div className="mt-2 flex items-center justify-between text-sm font-semibold text-ink">
+          <div className="mt-2 flex items-center gap-2 text-sm font-semibold text-ink">
             <span>Total</span>
             <span>{formatPrice(totalPrice)}</span>
           </div>

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
-import { Mic, MicOff, SendHorizontal, Sparkles } from 'lucide-react';
+import { Mic, MicOff, Minus, Plus, SendHorizontal, Sparkles } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { useChatContext } from '@/context/chat-context';
 import { useCart } from '@/context/cart-context';
@@ -10,6 +10,7 @@ import { formatPrice } from '@/lib/utils/format';
 import { isStaticToolUIPart, isTextUIPart, type ToolUIPart, type UIMessage } from 'ai';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 const QUICK_PROMPTS = [
   'Build a spicy combo with a drink.',
@@ -256,7 +257,7 @@ export function ChatPanel({ onMenuLinkClick }: { onMenuLinkClick?: () => void })
                               const isInCart = menuItemId ? cartItemIds.has(menuItemId) : false;
                               const canAction = Boolean(menuItemId) && message.role === 'assistant';
                               return (
-                                <span className="inline-flex items-center gap-2">
+                                <span className="inline-flex items-center gap-1">
                                   <Button
                                     type="button"
                                     variant="ghost"
@@ -267,35 +268,49 @@ export function ChatPanel({ onMenuLinkClick }: { onMenuLinkClick?: () => void })
                                   </Button>
                                   {canAction && (
                                     <>
-                                      <Button
-                                        type="button"
-                                        size="icon"
-                                        variant="outline"
-                                        onClick={() => {
-                                          if (!menuItemId) return;
-                                          handleAddFromMenu(menuItemId);
-                                        }}
-                                        disabled={isLoading}
-                                        className="h-6 w-6 border-white/10 bg-surfaceElevated text-xs font-semibold text-muted hover:border-white/30 hover:text-ink"
-                                        aria-label={`Add ${menuItem?.name ?? 'item'} to cart`}
-                                      >
-                                        +
-                                      </Button>
+                                      <Tooltip>
+                                        <TooltipTrigger>
+                                          <Button
+                                            type="button"
+                                            size="icon"
+                                            variant="outline"
+                                            onClick={() => {
+                                              if (!menuItemId) return;
+                                              handleAddFromMenu(menuItemId);
+                                            }}
+                                            disabled={isLoading}
+                                            className="h-6 w-6 border-white/10 bg-surfaceElevated text-xs font-semibold text-muted hover:border-white/30 hover:text-ink"
+                                            aria-label={`Add ${menuItem?.name ?? 'item'} to cart`}
+                                          >
+                                            <Plus className="h-3 w-3" />
+                                          </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                          Add {menuItem?.name ?? 'item'} to cart
+                                        </TooltipContent>
+                                      </Tooltip>
                                       {isInCart && (
-                                        <Button
-                                          type="button"
-                                          size="icon"
-                                          variant="outline"
-                                          onClick={() => {
-                                            if (!menuItemId) return;
-                                            handleRemoveFromMenu(menuItemId);
-                                          }}
-                                          disabled={isLoading}
-                                          className="h-6 w-6 border-white/10 bg-surfaceElevated text-xs font-semibold text-muted hover:border-white/30 hover:text-ink"
-                                          aria-label={`Remove ${menuItem?.name ?? 'item'} from cart`}
-                                        >
-                                          -
-                                        </Button>
+                                        <Tooltip>
+                                          <TooltipTrigger>
+                                            <Button
+                                              type="button"
+                                              size="icon"
+                                              variant="outline"
+                                              onClick={() => {
+                                                if (!menuItemId) return;
+                                                handleRemoveFromMenu(menuItemId);
+                                              }}
+                                              disabled={isLoading}
+                                              className="h-6 w-6 border-white/10 bg-surfaceElevated text-xs font-semibold text-muted hover:border-white/30 hover:text-ink"
+                                              aria-label={`Remove ${menuItem?.name ?? 'item'} from cart`}
+                                            >
+                                              <Minus className="h-3 w-3" />
+                                            </Button>
+                                          </TooltipTrigger>
+                                          <TooltipContent>
+                                            Remove {menuItem?.name ?? 'item'} from cart
+                                          </TooltipContent>
+                                        </Tooltip>
                                       )}
                                     </>
                                   )}
@@ -331,7 +346,7 @@ export function ChatPanel({ onMenuLinkClick }: { onMenuLinkClick?: () => void })
                               const isInCart = menuItemId ? cartItemIds.has(menuItemId) : false;
                               const canAction = Boolean(menuItemId) && message.role === 'assistant';
                               return (
-                                <span className="inline-flex items-center gap-2">
+                                <span className="inline-flex items-center gap-1">
                                   <Button
                                     type="button"
                                     variant="ghost"
@@ -342,35 +357,49 @@ export function ChatPanel({ onMenuLinkClick }: { onMenuLinkClick?: () => void })
                                   </Button>
                                   {canAction && (
                                     <>
-                                      <Button
-                                        type="button"
-                                        size="icon"
-                                        variant="outline"
-                                        onClick={() => {
-                                          if (!menuItemId) return;
-                                          handleAddFromMenu(menuItemId);
-                                        }}
-                                        disabled={isLoading}
-                                        className="h-6 w-6 border-white/10 bg-surfaceElevated text-xs font-semibold text-muted hover:border-white/30 hover:text-ink"
-                                        aria-label={`Add ${menuItem?.name ?? 'item'} to cart`}
-                                      >
-                                        +
-                                      </Button>
+                                      <Tooltip>
+                                        <TooltipTrigger>
+                                          <Button
+                                            type="button"
+                                            size="icon"
+                                            variant="outline"
+                                            onClick={() => {
+                                              if (!menuItemId) return;
+                                              handleAddFromMenu(menuItemId);
+                                            }}
+                                            disabled={isLoading}
+                                            className="h-6 w-6 border-white/10 bg-surfaceElevated text-xs font-semibold text-muted hover:border-white/30 hover:text-ink"
+                                            aria-label={`Add ${menuItem?.name ?? 'item'} to cart`}
+                                          >
+                                            <Plus className="h-3 w-3" />
+                                          </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                          Add {menuItem?.name ?? 'item'} to cart
+                                        </TooltipContent>
+                                      </Tooltip>
                                       {isInCart && (
-                                        <Button
-                                          type="button"
-                                          size="icon"
-                                          variant="outline"
-                                          onClick={() => {
-                                            if (!menuItemId) return;
-                                            handleRemoveFromMenu(menuItemId);
-                                          }}
-                                          disabled={isLoading}
-                                          className="h-6 w-6 border-white/10 bg-surfaceElevated text-xs font-semibold text-muted hover:border-white/30 hover:text-ink"
-                                          aria-label={`Remove ${menuItem?.name ?? 'item'} from cart`}
-                                        >
-                                          -
-                                        </Button>
+                                        <Tooltip>
+                                          <TooltipTrigger>
+                                            <Button
+                                              type="button"
+                                              size="icon"
+                                              variant="outline"
+                                              onClick={() => {
+                                                if (!menuItemId) return;
+                                                handleRemoveFromMenu(menuItemId);
+                                              }}
+                                              disabled={isLoading}
+                                              className="h-6 w-6 border-white/10 bg-surfaceElevated text-xs font-semibold text-muted hover:border-white/30 hover:text-ink"
+                                              aria-label={`Remove ${menuItem?.name ?? 'item'} from cart`}
+                                            >
+                                              <Minus className="h-3 w-3" />
+                                            </Button>
+                                          </TooltipTrigger>
+                                          <TooltipContent>
+                                            Remove {menuItem?.name ?? 'item'} from cart
+                                          </TooltipContent>
+                                        </Tooltip>
                                       )}
                                     </>
                                   )}
