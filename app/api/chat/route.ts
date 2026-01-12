@@ -11,7 +11,8 @@ import {
 import { openai } from '@ai-sdk/openai';
 import { z } from 'zod';
 import { MENU_ITEMS } from '@/lib/data/menu';
-import type { CartLine, CartLineSummary } from '@/lib/types/cart';
+import type { CartLine } from '@/lib/types/cart';
+import { addCartLine, removeCartLine, summarizeCart } from '@/lib/cart-utils';
 
 export const runtime = 'edge';
 
@@ -31,33 +32,18 @@ export async function POST(req: Request) {
     )
     .default([]);
   const cartSnapshot = cartSchema.parse(cart) as CartLine[];
+  let cartState = [...cartSnapshot];
 
   const tools = {
     getCart: tool({
       description: 'Get the current cart contents and quantities with names and prices.',
       inputSchema: zodSchema(z.object({})),
       execute: async () => {
-        const lines: CartLineSummary[] = cartSnapshot
-          .map((line: { itemId?: string; quantity?: number }) => {
-            const item = MENU_ITEMS.find((menuItem) => menuItem.id === line.itemId);
-            if (!item) return null;
-            const quantity = Number(line.quantity ?? 0);
-            return {
-              itemId: item.id,
-              name: item.name,
-              quantity,
-              price: item.price,
-              lineTotal: Number((item.price * quantity).toFixed(2))
-            };
-          })
-          .filter((line): line is CartLineSummary => Boolean(line));
-
-        const total = lines.reduce((sum, line) => sum + line.lineTotal, 0);
-
+        const { lines, total } = summarizeCart(cartState, MENU_ITEMS);
         return {
           currency: 'EUR',
           lines,
-          total: Number(total.toFixed(2))
+          total
         };
       }
     }),
@@ -81,6 +67,7 @@ export async function POST(req: Request) {
         if (!item) {
           return { ok: false, message: 'Item not found', itemId, quantity };
         }
+        cartState = addCartLine(cartState, itemId, quantity);
         return {
           ok: true,
           action: 'addToCart',
@@ -102,6 +89,7 @@ export async function POST(req: Request) {
         if (!item) {
           return { ok: false, message: 'Item not found', itemId };
         }
+        cartState = removeCartLine(cartState, itemId);
         return {
           ok: true,
           action: 'removeFromCart',
@@ -131,7 +119,7 @@ export async function POST(req: Request) {
       menuSummary,
     messages: modelMessages,
     tools: toolSet,
-    stopWhen: stepCountIs(4)
+    stopWhen: stepCountIs(8)
   });
 
   return result.toUIMessageStreamResponse();

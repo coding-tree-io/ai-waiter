@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Mic, MicOff, SendHorizontal, Sparkles } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { useChatContext } from '@/context/chat-context';
+import { useCart } from '@/context/cart-context';
 import { MENU_ITEMS } from '@/lib/data/menu';
 import { isStaticToolUIPart, isTextUIPart, type ToolUIPart, type UIMessage } from 'ai';
 
@@ -69,6 +70,7 @@ type SpeechRecognitionConstructor = new () => {
 
 export function ChatPanel({ onMenuLinkClick }: { onMenuLinkClick?: () => void }) {
   const { messages, sendMessage, status } = useChatContext();
+  const { items } = useCart();
   const [input, setInput] = useState('');
   const isLoading = status === 'submitted' || status === 'streaming';
   const [isListening, setIsListening] = useState(false);
@@ -134,6 +136,17 @@ export function ChatPanel({ onMenuLinkClick }: { onMenuLinkClick?: () => void })
     [messages]
   );
   const scrollRef = useRef<HTMLDivElement | null>(null);
+  const handleAddFromMenu = (itemId: string) => {
+    const item = menuById.get(itemId);
+    if (!item) return;
+    sendMessage({ text: `Add 1 [${item.name}](#menu-${item.id}) to the cart.` });
+  };
+  const handleRemoveFromMenu = (itemId: string) => {
+    const item = menuById.get(itemId);
+    if (!item) return;
+    sendMessage({ text: `Remove [${item.name}](#menu-${item.id}) from the cart.` });
+  };
+  const cartItemIds = useMemo(() => new Set(items.map((line) => line.itemId)), [items]);
 
   useEffect(() => {
     if (!scrollRef.current) return;
@@ -174,6 +187,10 @@ export function ChatPanel({ onMenuLinkClick }: { onMenuLinkClick?: () => void })
               <div className="space-y-2">
                 {message.parts.map((part, index) => {
                   if (isTextUIPart(part)) {
+                    const linkTone =
+                      message.role === 'user'
+                        ? 'font-semibold text-white underline decoration-white/50 underline-offset-4 transition hover:text-white'
+                        : 'font-semibold text-accent underline decoration-transparent underline-offset-4 transition hover:text-glow hover:decoration-glow';
                     return (
                       <div
                         key={`${message.id}-text-${index}`}
@@ -185,15 +202,44 @@ export function ChatPanel({ onMenuLinkClick }: { onMenuLinkClick?: () => void })
                       >
                         <ReactMarkdown
                           components={{
-                            a: ({ href, children }) => (
-                              <button
-                                type="button"
-                                onClick={() => scrollToMenuAnchor(href, onMenuLinkClick)}
-                                className="font-semibold text-accent underline decoration-transparent underline-offset-4 transition hover:text-glow hover:decoration-glow"
-                              >
-                                {children}
-                              </button>
-                            )
+                            a: ({ href, children }) => {
+                              const targetId = href?.replace('#menu-', '');
+                              const menuItem = targetId ? menuById.get(targetId) : null;
+                              const isInCart = menuItem ? cartItemIds.has(menuItem.id) : false;
+                              return (
+                                <span className="inline-flex items-center gap-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => scrollToMenuAnchor(href, onMenuLinkClick)}
+                                    className={linkTone}
+                                  >
+                                    {children}
+                                  </button>
+                                  {menuItem && (
+                                    <>
+                                      <button
+                                        type="button"
+                                        onClick={() => handleAddFromMenu(menuItem.id)}
+                                        className="rounded-full border border-white/10 bg-surfaceElevated px-2 py-0.5 text-[10px] uppercase tracking-[0.2em] text-muted transition hover:border-white/30 hover:text-ink"
+                                        aria-label={`Add ${menuItem.name} to cart`}
+                                      >
+                                        Add
+                                      </button>
+                                      {isInCart && (
+                                        <button
+                                          type="button"
+                                          onClick={() => handleRemoveFromMenu(menuItem.id)}
+                                          className="rounded-full border border-white/10 bg-surfaceElevated px-2 py-0.5 text-[10px] uppercase tracking-[0.2em] text-muted transition hover:border-white/30 hover:text-ink"
+                                          aria-label={`Remove ${menuItem.name} from cart`}
+                                        >
+                                          Remove
+                                        </button>
+                                      )}
+                                    </>
+                                  )}
+                                </span>
+                              );
+                            }
                           }}
                         >
                           {part.text}
@@ -205,6 +251,10 @@ export function ChatPanel({ onMenuLinkClick }: { onMenuLinkClick?: () => void })
                   if (isStaticToolUIPart(part) && part.state === 'output-available') {
                     const toolMessage = getToolMessage(part);
                     if (!toolMessage) return null;
+                    const linkTone =
+                      message.role === 'user'
+                        ? 'font-semibold text-white underline decoration-white/50 underline-offset-4 transition hover:text-white'
+                        : 'font-semibold text-accent underline decoration-transparent underline-offset-4 transition hover:text-glow hover:decoration-glow';
                     return (
                       <div
                         key={`${message.id}-tool-${part.toolCallId}`}
@@ -212,15 +262,44 @@ export function ChatPanel({ onMenuLinkClick }: { onMenuLinkClick?: () => void })
                       >
                         <ReactMarkdown
                           components={{
-                            a: ({ href, children }) => (
-                              <button
-                                type="button"
-                                onClick={() => scrollToMenuAnchor(href, onMenuLinkClick)}
-                                className="font-semibold text-accent underline decoration-transparent underline-offset-4 transition hover:text-glow hover:decoration-glow"
-                              >
-                                {children}
-                              </button>
-                            )
+                            a: ({ href, children }) => {
+                              const targetId = href?.replace('#menu-', '');
+                              const menuItem = targetId ? menuById.get(targetId) : null;
+                              const isInCart = menuItem ? cartItemIds.has(menuItem.id) : false;
+                              return (
+                                <span className="inline-flex items-center gap-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => scrollToMenuAnchor(href, onMenuLinkClick)}
+                                    className={linkTone}
+                                  >
+                                    {children}
+                                  </button>
+                                  {menuItem && (
+                                    <>
+                                      <button
+                                        type="button"
+                                        onClick={() => handleAddFromMenu(menuItem.id)}
+                                        className="rounded-full border border-white/10 bg-surfaceElevated px-2 py-0.5 text-[10px] uppercase tracking-[0.2em] text-muted transition hover:border-white/30 hover:text-ink"
+                                        aria-label={`Add ${menuItem.name} to cart`}
+                                      >
+                                        Add
+                                      </button>
+                                      {isInCart && (
+                                        <button
+                                          type="button"
+                                          onClick={() => handleRemoveFromMenu(menuItem.id)}
+                                          className="rounded-full border border-white/10 bg-surfaceElevated px-2 py-0.5 text-[10px] uppercase tracking-[0.2em] text-muted transition hover:border-white/30 hover:text-ink"
+                                          aria-label={`Remove ${menuItem.name} from cart`}
+                                        >
+                                          Remove
+                                        </button>
+                                      )}
+                                    </>
+                                  )}
+                                </span>
+                              );
+                            }
                           }}
                         >
                           {toolMessage}
@@ -234,6 +313,13 @@ export function ChatPanel({ onMenuLinkClick }: { onMenuLinkClick?: () => void })
               </div>
             </div>
           ))}
+          {isLoading && (
+            <div className="flex justify-start">
+              <div className="max-w-[80%] rounded-2xl border border-white/10 bg-surfaceElevated px-4 py-2 text-xs text-muted">
+                AI is typing…
+              </div>
+            </div>
+          )}
           <div ref={scrollRef} />
         </div>
       </div>
