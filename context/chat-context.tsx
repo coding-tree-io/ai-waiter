@@ -6,6 +6,7 @@ import { useCart } from '@/context/cart-context';
 import { MENU_ITEMS } from '@/lib/data/menu';
 import type { CartLine } from '@/lib/types/cart';
 import { DefaultChatTransport, isStaticToolUIPart, type UIMessage } from 'ai';
+import { createToolCallCache } from '@/lib/tool-call-cache';
 
 type ChatContextValue = ReturnType<typeof useChat>;
 
@@ -13,7 +14,7 @@ const ChatContext = createContext<ChatContextValue | undefined>(undefined);
 
 export function ChatProvider({ children }: { children: React.ReactNode }) {
   const { items, addToCart, removeFromCart } = useCart();
-  const handledToolCalls = useRef(new Set<string>());
+  const handledToolCalls = useRef(createToolCallCache(200));
   const cartRef = useRef(items);
   const [transport] = useState(
     // eslint-disable-next-line react-hooks/refs
@@ -41,6 +42,9 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
   });
 
   useEffect(() => {
+    if (chat.messages.length === 0) {
+      handledToolCalls.current.clear();
+    }
     chat.messages.forEach((message) => {
       message.parts.forEach((part) => {
         if (!isStaticToolUIPart(part) || part.state !== 'output-available') return;

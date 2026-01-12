@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { Mic, MicOff, SendHorizontal, Sparkles } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { useChatContext } from '@/context/chat-context';
 import { useCart } from '@/context/cart-context';
 import { MENU_ITEMS } from '@/lib/data/menu';
+import { formatPrice } from '@/lib/utils/format';
 import { isStaticToolUIPart, isTextUIPart, type ToolUIPart, type UIMessage } from 'ai';
 
 const QUICK_PROMPTS = [
@@ -38,7 +39,31 @@ function getToolMessage(part: ToolUIPart) {
   }
 
   if (toolName === 'getCart') {
-    return 'Checked the current cart.';
+    const output = (part as ToolUIPart & { output?: unknown }).output as
+      | {
+          lines?: Array<{ itemId: string; name: string; quantity: number; lineTotal: number }>;
+          total?: number;
+        }
+      | undefined;
+
+    if (!output || !Array.isArray(output.lines)) {
+      return 'Checked the current cart.';
+    }
+
+    if (output.lines.length === 0) {
+      return 'The cart is empty.';
+    }
+
+    const lineItems = output.lines
+      .map(
+        (line) =>
+          `- ${line.quantity} x [${line.name}](#menu-${line.itemId}) — ${formatPrice(
+            line.lineTotal
+          )}`
+      )
+      .join('\n');
+
+    return `Current cart:\n${lineItems}\n\n**Total:** ${formatPrice(output.total ?? 0)}`;
   }
 
   return null;
@@ -69,8 +94,8 @@ type SpeechRecognitionConstructor = new () => {
 };
 
 export function ChatPanel({ onMenuLinkClick }: { onMenuLinkClick?: () => void }) {
-  const { messages, sendMessage, status } = useChatContext();
-  const { items } = useCart();
+  const { messages, sendMessage, setMessages, status } = useChatContext();
+  const { items, addToCart, removeFromCart } = useCart();
   const [input, setInput] = useState('');
   const isLoading = status === 'submitted' || status === 'streaming';
   const [isListening, setIsListening] = useState(false);
@@ -136,15 +161,35 @@ export function ChatPanel({ onMenuLinkClick }: { onMenuLinkClick?: () => void })
     [messages]
   );
   const scrollRef = useRef<HTMLDivElement | null>(null);
+  const localIdPrefix = useId();
+  const localIdCounter = useRef(0);
+  const createLocalMessageId = () => {
+    localIdCounter.current += 1;
+    return `local-${localIdPrefix}-${localIdCounter.current}`;
+  };
+
+  const appendLocalMessage = (text: string) => {
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: createLocalMessageId(),
+        role: 'assistant',
+        parts: [{ type: 'text', text }]
+      }
+    ]);
+  };
+
   const handleAddFromMenu = (itemId: string) => {
     const item = menuById.get(itemId);
     if (!item) return;
-    sendMessage({ text: `Add 1 [${item.name}](#menu-${item.id}) to the cart.` });
+    addToCart(item.id, 1);
+    appendLocalMessage(`Added 1 x [${item.name}](#menu-${item.id}) to the cart.`);
   };
   const handleRemoveFromMenu = (itemId: string) => {
     const item = menuById.get(itemId);
     if (!item) return;
-    sendMessage({ text: `Remove [${item.name}](#menu-${item.id}) from the cart.` });
+    removeFromCart(item.id);
+    appendLocalMessage(`Removed [${item.name}](#menu-${item.id}) from the cart.`);
   };
   const cartItemIds = useMemo(() => new Set(items.map((line) => line.itemId)), [items]);
 
@@ -205,7 +250,9 @@ export function ChatPanel({ onMenuLinkClick }: { onMenuLinkClick?: () => void })
                             a: ({ href, children }) => {
                               const targetId = href?.replace('#menu-', '');
                               const menuItem = targetId ? menuById.get(targetId) : null;
-                              const isInCart = menuItem ? cartItemIds.has(menuItem.id) : false;
+                              const menuItemId = menuItem?.id;
+                              const isInCart = menuItemId ? cartItemIds.has(menuItemId) : false;
+                              const canAction = Boolean(menuItemId) && message.role === 'assistant';
                               return (
                                 <span className="inline-flex items-center gap-2">
                                   <button
@@ -215,24 +262,32 @@ export function ChatPanel({ onMenuLinkClick }: { onMenuLinkClick?: () => void })
                                   >
                                     {children}
                                   </button>
-                                  {menuItem && (
+                                  {canAction && (
                                     <>
                                       <button
                                         type="button"
-                                        onClick={() => handleAddFromMenu(menuItem.id)}
-                                        className="rounded-full border border-white/10 bg-surfaceElevated px-2 py-0.5 text-[10px] uppercase tracking-[0.2em] text-muted transition hover:border-white/30 hover:text-ink"
-                                        aria-label={`Add ${menuItem.name} to cart`}
+                                        onClick={() => {
+                                          if (!menuItemId) return;
+                                          handleAddFromMenu(menuItemId);
+                                        }}
+                                        disabled={isLoading}
+                                        className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-white/10 bg-surfaceElevated text-xs font-semibold text-muted transition hover:border-white/30 hover:text-ink"
+                                        aria-label={`Add ${menuItem?.name ?? 'item'} to cart`}
                                       >
-                                        Add
+                                        +
                                       </button>
                                       {isInCart && (
                                         <button
                                           type="button"
-                                          onClick={() => handleRemoveFromMenu(menuItem.id)}
-                                          className="rounded-full border border-white/10 bg-surfaceElevated px-2 py-0.5 text-[10px] uppercase tracking-[0.2em] text-muted transition hover:border-white/30 hover:text-ink"
-                                          aria-label={`Remove ${menuItem.name} from cart`}
+                                          onClick={() => {
+                                            if (!menuItemId) return;
+                                            handleRemoveFromMenu(menuItemId);
+                                          }}
+                                          disabled={isLoading}
+                                          className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-white/10 bg-surfaceElevated text-xs font-semibold text-muted transition hover:border-white/30 hover:text-ink"
+                                          aria-label={`Remove ${menuItem?.name ?? 'item'} from cart`}
                                         >
-                                          Remove
+                                          -
                                         </button>
                                       )}
                                     </>
@@ -265,7 +320,9 @@ export function ChatPanel({ onMenuLinkClick }: { onMenuLinkClick?: () => void })
                             a: ({ href, children }) => {
                               const targetId = href?.replace('#menu-', '');
                               const menuItem = targetId ? menuById.get(targetId) : null;
-                              const isInCart = menuItem ? cartItemIds.has(menuItem.id) : false;
+                              const menuItemId = menuItem?.id;
+                              const isInCart = menuItemId ? cartItemIds.has(menuItemId) : false;
+                              const canAction = Boolean(menuItemId) && message.role === 'assistant';
                               return (
                                 <span className="inline-flex items-center gap-2">
                                   <button
@@ -275,24 +332,32 @@ export function ChatPanel({ onMenuLinkClick }: { onMenuLinkClick?: () => void })
                                   >
                                     {children}
                                   </button>
-                                  {menuItem && (
+                                  {canAction && (
                                     <>
                                       <button
                                         type="button"
-                                        onClick={() => handleAddFromMenu(menuItem.id)}
-                                        className="rounded-full border border-white/10 bg-surfaceElevated px-2 py-0.5 text-[10px] uppercase tracking-[0.2em] text-muted transition hover:border-white/30 hover:text-ink"
-                                        aria-label={`Add ${menuItem.name} to cart`}
+                                        onClick={() => {
+                                          if (!menuItemId) return;
+                                          handleAddFromMenu(menuItemId);
+                                        }}
+                                        disabled={isLoading}
+                                        className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-white/10 bg-surfaceElevated text-xs font-semibold text-muted transition hover:border-white/30 hover:text-ink"
+                                        aria-label={`Add ${menuItem?.name ?? 'item'} to cart`}
                                       >
-                                        Add
+                                        +
                                       </button>
                                       {isInCart && (
                                         <button
                                           type="button"
-                                          onClick={() => handleRemoveFromMenu(menuItem.id)}
-                                          className="rounded-full border border-white/10 bg-surfaceElevated px-2 py-0.5 text-[10px] uppercase tracking-[0.2em] text-muted transition hover:border-white/30 hover:text-ink"
-                                          aria-label={`Remove ${menuItem.name} from cart`}
+                                          onClick={() => {
+                                            if (!menuItemId) return;
+                                            handleRemoveFromMenu(menuItemId);
+                                          }}
+                                          disabled={isLoading}
+                                          className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-white/10 bg-surfaceElevated text-xs font-semibold text-muted transition hover:border-white/30 hover:text-ink"
+                                          aria-label={`Remove ${menuItem?.name ?? 'item'} from cart`}
                                         >
-                                          Remove
+                                          -
                                         </button>
                                       )}
                                     </>
