@@ -16,26 +16,38 @@ export function MenuPanel() {
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
 
   useEffect(() => {
-    const focusElement = (targetId: string) => {
-      const element = document.getElementById(targetId);
-      if (!element) return;
+    const focusElement = (element: HTMLElement) => {
       element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      (element as HTMLElement).focus({ preventScroll: true });
-      setHighlightedId(targetId);
+      element.focus({ preventScroll: true });
+      setHighlightedId(element.id);
       window.setTimeout(() => setHighlightedId(null), 2200);
     };
 
+    const normalizeHash = () => window.location.hash.replace(/^#\/?/, '');
+
+    const focusElementById = (targetId: string) => {
+      const element = document.getElementById(targetId);
+      if (!element) return false;
+      focusElement(element as HTMLElement);
+      return true;
+    };
+
     const focusFromHash = () => {
-      const hash = window.location.hash.replace('#', '');
+      const hash = normalizeHash();
       if (!hash) return;
-      focusElement(hash);
+      const tryFocus = (attemptsLeft: number) => {
+        if (focusElementById(hash)) return;
+        if (attemptsLeft <= 0) return;
+        window.setTimeout(() => tryFocus(attemptsLeft - 1), 120);
+      };
+      tryFocus(5);
     };
 
     const focusFromEvent = (event: Event) => {
       const customEvent = event as CustomEvent<{ id?: string }>;
       const targetId = customEvent.detail?.id;
       if (!targetId) return;
-      focusElement(targetId);
+      focusElementById(targetId);
     };
 
     focusFromHash();
