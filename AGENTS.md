@@ -2,5 +2,6 @@
 
 <INSTRUCTIONS>
 ## Validation
-- Always run `npm run lint` and `npm run build` after each change unless the user says otherwise.
+- Always run `npm run lint`, `npm run build`, and `npm run test` after each change unless the user says otherwise.
+- Add at least one test for every new feature.
 </INSTRUCTIONS>
